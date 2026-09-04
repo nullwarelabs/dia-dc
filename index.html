@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogItCU0ZbRjyIsICJzaG9ydF9uYW1lIjogItCU0ZbRjyIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMTExMTExIiwgInRoZW1lX2NvbG9yIjogIiMwMDAwMDAiLCAic3RhcnRfdXJsIjogIi4iLCAiaWNvbnMiOiBbXX0=">
+<link rel="icon" type="image/png" href="app_icon.png">
+<link rel="apple-touch-icon" href="app_icon.png">
+<title>Дія</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --doc-bg: linear-gradient(180deg, #FFF8DC 0%, #C8E6F5 35%, #D4C4F0 70%, #E8D4F0 100%);
+    --feed-bg: linear-gradient(180deg, #A8D8F0 0%, #B8E0F5 50%, #C8E8F0 100%);
+    --card: rgba(255,255,255,0.92);
+    --green: #81D4A2;
+    --nav: #0a0a0a;
+    --text: #0a0a0a;
+    --text2: #6b7280;
+  }
+  html,body { width:100%; height:100%; overflow:hidden; background:#111; font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; color:var(--text); -webkit-font-smoothing:antialiased; }
+  #app { width:100%; max-width:430px; height:100vh; margin:0 auto; position:relative; overflow:hidden; background:var(--doc-bg); }
+
+  .screens { position:absolute; top:0; left:0; right:0; bottom:78px; overflow:hidden; }
+  .screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; transform:translateX(100%); transition:transform .3s ease, opacity .2s; opacity:0; padding:12px 16px 20px; scrollbar-width:none; }
+  .screen::-webkit-scrollbar { display:none; }
+  .screen.active { transform:translateX(0); opacity:1; z-index:10; }
+
+  /* DOCS */
+  #scr-docs { background:var(--doc-bg); padding-top:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .carousel { position:relative; width:100%; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+  .track { position:relative; width:100%; height:470px; }
+  .dcard { position:absolute; width:90%; left:5%; top:0; bottom:0; margin:auto 0; height:470px; transition:all .35s ease; cursor:pointer; will-change:transform; }
+  .dcard.left  { transform:translateX(-75%) scale(.85); opacity:.35; z-index:1; }
+  .dcard.center{ transform:translateX(0) scale(1); opacity:1; z-index:10; }
+  .dcard.right { transform:translateX(75%) scale(.85); opacity:.35; z-index:1; }
+  .dcard.hide  { transform:translateX(0) scale(.65); opacity:0; z-index:0; pointer-events:none; }
+  .dcard-inner { width:100%; height:100%; position:relative; }
+  .dface,.dback { position:absolute; width:100%; height:100%; border-radius:28px; background:var(--card); box-shadow:0 4px 20px rgba(0,0,0,.08), inset 0 0 0 1px rgba(255,255,255,.5); overflow:hidden; }
+  .dback { display:none; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  .dcard.flip .dface { display:none; }
+  .dcard.flip .dback { display:flex; }
+
+  .dheader { font-size:22px; font-weight:600; padding:24px 22px 14px; line-height:1.2; letter-spacing:-.3px; display:flex; align-items:center; gap:10px; }
+  
+  .dbody { display:flex; padding:0 20px; gap:16px; align-items:flex-start; }
+  .dphoto { width:120px; height:150px; border-radius:16px; background:#e5e7eb; flex-shrink:0; overflow:hidden; }
+  .dphoto img { width:100%; height:100%; object-fit:cover; }
+  .dinfo { flex:1; font-size:14px; line-height:1.4; padding-top:2px; }
+  .dinfo .lab { color:var(--text2); font-size:13px; font-weight:400; display:block; margin-bottom:2px; }
+  .dinfo .val { font-size:16px; font-weight:500; color:var(--text); margin-bottom:14px; }
+  .dsign { margin-top:2px; height:30px; display:flex; align-items:flex-end; }
+  .dsign img { height:100%; width:auto; object-fit:contain; filter: contrast(1.2); }
+  .greenbar { background:var(--green); color:#064e3b; font-size:12px; font-weight:400; padding:8px 0; margin-top:16px; overflow:hidden; white-space:nowrap; }
+  .greenbar span { display:inline-block; animation:marq 14s linear infinite; padding-left:100%; }
+  @keyframes marq { 0%{transform:translateX(0)} 100%{transform:translateX(-100%)} }
+  .dfoot { display:flex; justify-content:space-between; align-items:flex-end; padding:14px 20px 20px; }
+  .dname { font-size:26px; font-weight:600; line-height:1.15; letter-spacing:-.4px; }
+  .dmenu { width:44px; height:44px; border-radius:50%; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  .dots { display:flex; justify-content:center; gap:8px; margin-top:16px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.35); transition:all .3s; }
+  .dot.on { background:#fff; width:20px; border-radius:4px; }
+
+  .qrt { font-size:13px; color:var(--text2); margin-bottom:16px; font-weight:400; }
+  .qrbox { width:200px; height:200px; background:#fff; padding:8px; margin-bottom:20px; border-radius:8px; }
+  .qrgrid { width:100%; height:100%; display:grid; grid-template-columns:repeat(25,1fr); grid-template-rows:repeat(25,1fr); }
+  .qrc { background:#fff; } .qrc.on { background:#000; }
+  .qrtog { display:flex; gap:28px; }
+  .qrtb { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; color:var(--text2); font-weight:400; cursor:pointer; }
+  .qrtb .ic { width:48px; height:48px; border-radius:50%; background:#e5e7eb; display:flex; align-items:center; justify-content:center; font-size:20px; transition:.2s; }
+  .qrtb.on .ic { background:#000; color:#fff; }
+  .qrtb.on { color:#000; font-weight:500; }
+
+  .rbody { padding:0 20px; font-size:15px; line-height:1.5; }
+  .rlab { font-size:20px; font-weight:600; margin-bottom:10px; letter-spacing:-.2px; }
+  .rname { font-size:16px; font-weight:500; margin-bottom:10px; line-height:1.35; }
+  .rnum { font-size:32px; font-weight:600; letter-spacing:.5px; margin:6px 0 10px; }
+  .ract { display:flex; gap:10px; align-items:center; padding:0 20px 18px; }
+  .icob { width:36px; height:36px; border-radius:50%; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; }
+
+  .acard { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:12px; font-size:15px; color:var(--text2); font-weight:400; }
+  .aico { width:56px; height:56px; border-radius:50%; border:2px solid #1f2937; display:flex; align-items:center; justify-content:center; font-size:26px; color:#1f2937; }
+
+  /* FEED */
+  #scr-feed { background:var(--feed-bg); }
+  .ftitle { font-size:24px; font-weight:600; margin:6px 0 16px; display:flex; align-items:center; gap:8px; letter-spacing:-.3px; }
+  .fcard { background:rgba(255,255,255,.72); border-radius:24px; padding:16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .fch { font-size:17px; font-weight:600; margin-bottom:3px; }
+  .fcs { font-size:13.5px; color:var(--text2); margin-bottom:12px; font-weight:400; }
+  .fcr { display:flex; justify-content:space-between; align-items:center; }
+  .ficons { display:flex; gap:6px; }
+  .fic { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .sar { width:28px; height:28px; background:#000; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+  .qacts { display:flex; justify-content:space-around; margin-bottom:18px; }
+  .qa { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11.5px; text-align:center; width:80px; font-weight:500; }
+  .qa .qai { width:56px; height:56px; border-radius:16px; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; }
+  .ban { background:linear-gradient(135deg,#0a0a1a,#1a1a2e); border-radius:24px; padding:20px; color:#fff; margin-bottom:18px; position:relative; overflow:hidden; }
+  .bant { font-size:20px; font-weight:700; letter-spacing:2px; }
+  .bans { font-size:14px; margin-top:6px; opacity:.9; font-weight:400; }
+  .bana { position:absolute; right:14px; bottom:14px; width:34px; height:34px; background:rgba(255,255,255,.1); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .st { font-size:17px; font-weight:600; margin:18px 0 10px; }
+  .nc { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+  .nc::-webkit-scrollbar { display:none; }
+  .ncard { min-width:260px; background:rgba(255,255,255,.78); border-radius:20px; overflow:hidden; }
+  .nimg { height:110px; background:linear-gradient(135deg,#60a5fa,#93c5fd); display:flex; align-items:center; justify-content:center; }
+  .ncon { padding:12px; font-size:13.5px; font-weight:400; line-height:1.35; }
+  .nd { font-size:11.5px; color:var(--text2); margin-bottom:4px; font-weight:400; }
+  .sli { background:rgba(255,255,255,.72); border-radius:14px; padding:14px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:500; }
+
+  /* AI */
+  #scr-ai { background:var(--feed-bg); }
+  .ait { font-size:24px; font-weight:600; margin:6px 0 16px; }
+  .aich { background:rgba(255,255,255,.72); border-radius:24px; padding:16px; min-height:240px; overflow-y:auto; max-height:calc(100% - 130px); }
+  .aim { background:#e5e7eb; color:#111; padding:12px 16px; border-radius:18px 18px 18px 4px; max-width:78%; margin-bottom:10px; font-size:13.5px; font-weight:400; line-height:1.45; float:left; clear:both; }
+  .aim.u { background:#000; color:#fff; float:right; border-radius:18px 18px 4px 18px; }
+  .aiw { position:absolute; bottom:10px; left:16px; right:16px; display:flex; gap:8px; }
+  .aii { flex:1; background:rgba(255,255,255,.9); border:none; border-radius:22px; padding:12px 18px; font-size:14px; font-family:inherit; outline:none; }
+  .ais { width:44px; height:44px; border-radius:50%; background:#000; color:#fff; border:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+  /* SERVICES */
+  #scr-srv { background:var(--feed-bg); }
+  .srvt { font-size:24px; font-weight:600; margin:6px 0 16px; letter-spacing:-.3px; }
+  .srch { background:rgba(255,255,255,.72); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:14px; color:var(--text2); font-weight:400; }
+  .sg { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stile { background:rgba(255,255,255,.72); border-radius:20px; padding:16px; display:flex; flex-direction:column; gap:10px; font-size:13.5px; font-weight:500; }
+  .sti { width:40px; height:40px; border-radius:50%; background:#000; color:#fff; display:flex; align-items:center; justify-content:center; }
+
+  /* MENU */
+  #scr-menu { background:var(--feed-bg); }
+  .mtit { font-size:24px; font-weight:600; margin:6px 0 3px; }
+  .mver { font-size:12.5px; color:var(--text2); margin-bottom:18px; font-weight:400; }
+  .mgrp { background:rgba(255,255,255,.82); border-radius:20px; margin-bottom:10px; overflow:hidden; }
+  .mit { padding:14px 16px; display:flex; align-items:center; gap:12px; font-size:14.5px; font-weight:500; border-bottom:1px solid rgba(0,0,0,.03); cursor:pointer; }
+  .mit:last-child { border-bottom:none; }
+  .mit:active { background:rgba(0,0,0,.02); }
+  .mii { font-size:18px; width:24px; text-align:center; display:flex; align-items:center; justify-content:center; }
+  .lout { background:#000; color:#fff; text-align:center; padding:14px; border-radius:28px; margin:20px auto; width:55%; font-size:14.5px; font-weight:600; border:none; font-family:inherit; cursor:pointer; }
+  .priv { text-align:center; font-size:11.5px; color:var(--text2); text-decoration:underline; margin-bottom:20px; cursor:pointer; }
+
+  /* MODAL */
+  .modo { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:500; display:none; align-items:flex-end; justify-content:center; opacity:0; transition:opacity .3s; }
+  .modo.show { display:flex; opacity:1; }
+  .mods { background:#fff; width:100%; max-width:430px; border-radius:28px 28px 0 0; padding:22px 18px 30px; transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,0,1); max-height:85vh; overflow-y:auto; }
+  .modo.show .mods { transform:translateY(0); }
+  .modh { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .modt { font-size:20px; font-weight:600; }
+  .modx { width:34px; height:34px; border-radius:50%; background:#f3f4f6; border:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .fg { margin-bottom:14px; }
+  .fl { font-size:12px; color:var(--text2); font-weight:500; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:.3px; }
+  .fi { width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:15px; font-family:inherit; outline:none; background:#f9fafb; }
+  .fi:focus { border-color:#000; background:#fff; }
+  .sbt { width:100%; padding:14px; background:#000; color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; margin-top:6px; }
+
+  .toast { position:fixed; top:24px; left:50%; transform:translateX(-50%) translateY(-16px); background:#000; color:#fff; padding:10px 22px; border-radius:22px; font-size:13px; font-weight:500; z-index:600; opacity:0; transition:all .3s; pointer-events:none; }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .pwa-btn { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(80px); background:#000; color:#fff; padding:12px 24px; border-radius:24px; font-size:14px; font-weight:500; z-index:300; opacity:0; transition:all .4s cubic-bezier(.32,.72,0,1); pointer-events:none; box-shadow:0 4px 20px rgba(0,0,0,.2); display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  .pwa-btn.show { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+
+  .bnav { position:absolute; bottom:0; left:0; right:0; height:78px; background:var(--nav); display:flex; justify-content:space-around; align-items:flex-start; padding-top:10px; z-index:200; }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:3px; color:rgba(255,255,255,.4); font-size:10px; cursor:pointer; transition:color .2s; position:relative; padding-top:5px; width:60px; font-weight:400; }
+  .ni.on { color:#fff; }
+  .ni.on::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:32px; height:2.5px; background:#fff; border-radius:0 0 2px 2px; }
+  .nis { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .nis svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+  .icon-svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .icon-svg-fill { width:20px; height:20px; fill:currentColor; stroke:none; }
+  .codebox { position:relative; width:200px; height:200px; margin-bottom:20px; display:flex; align-items:center; justify-content:center; }
+  .barcode-canvas { width:200px; height:100px; background:#fff; border-radius:8px; display:none; }
+  .codebox .qrbox { margin-bottom:0; }
+  .fi[type="file"] { padding:8px 14px; font-size:13px; }
+</style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<body>
+
+<div id="app">
+  <div class="screens">
+    <!-- FEED -->
+    <div class="screen" id="scr-feed">
+      <div class="ftitle">Привіт, <span id="ffn">Максим</span></div>
+      <div class="fcard">
+        <div class="fch">Незламність</div>
+        <div class="fcs">Мапа Пунктів Незламності</div>
+        <div class="fcr">
+          <div class="ficons">
+            <div class="fic" style="background:#2563eb;">
+              <svg class="icon-svg-fill" viewBox="0 0 24 24" style="color:#fff;width:16px;height:16px;"><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="fic" style="background:#facc15;">
+              <svg class="icon-svg" viewBox="0 0 24 24" style="color:#000;width:16px;height:16px;"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+            </div>
+          </div>
+          <div class="sar">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:14px;height:14px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="qacts">
+        <div class="qa">
+          <div class="qai">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div>Сканувати<br>QR-код</div>
+        </div>
+        <div class="qa">
+          <div class="qai" style="font-size:18px;">
+            <svg class="icon-svg-fill" viewBox="0 0 24 24" style="width:22px;height:22px;"><rect x="2" y="2" width="20" height="20" rx="2" fill="#0057B8"/><rect x="2" y="12" width="20" height="10" rx="0" fill="#FFDD00"/></svg>
+          </div>
+          <div>Військові<br>облігації</div>
+        </div>
+        <div class="qa">
+          <div class="qai">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div>Чатбот<br>єВорог</div>
+        </div>
+      </div>
+      <div class="ban">
+        <div class="bant">ARMY OF DRONES</div>
+        <div class="bans">Допомогти армії</div>
+        <div class="bana">
+          <svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:16px;height:16px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+      <div class="st">Що нового?</div>
+      <div class="nc">
+        <div class="ncard">
+          <div class="nimg">
+            <svg class="icon-svg-fill" viewBox="0 0 24 24" style="width:48px;height:48px;color:#fff;"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg>
+          </div>
+          <div class="ncon"><div class="nd">15 січня, 10:00</div><div>Оберіть у Дії членів журі Нацвідбору на Євробачення-2024</div></div>
+        </div>
+        <div class="ncard">
+          <div class="nimg" style="background:linear-gradient(135deg,#f472b6,#ec4899);">
+            <svg class="icon-svg-fill" viewBox="0 0 24 24" style="width:48px;height:48px;color:#fff;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <div class="ncon"><div class="nd">10 січня, 14:00</div><div>Нові послуги у застосунку Дія</div></div>
+        </div>
+      </div>
+      <div class="st">Популярні послуги</div>
+      <div class="sli">
+        <span>Реєстрація пошкодженого майна</span>
+        <div class="sar"><svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:14px;height:14px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+      <div class="sli">
+        <span>Заміна водійського посвідчення</span>
+        <div class="sar"><svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:14px;height:14px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+      <div class="sli">
+        <span>Податки ФОП</span>
+        <div class="sar"><svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:14px;height:14px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </div>
+
+    <!-- DOCS -->
+    <div class="screen active" id="scr-docs">
+      <div class="carousel" id="car">
+        <div class="track" id="trk">
+          <!-- Passport -->
+          <div class="dcard center" data-i="0">
+            <div class="dcard-inner">
+              <div class="dface">
+                <div class="dheader">
+                  Паспорт громадянина України
+                </div>
+                <div class="dbody">
+                  <div class="dphoto"><img id="dp" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop&crop=face" alt=""></div>
+                  <div class="dinfo">
+                    <div><span class="lab">Дата народження:</span><span class="val" id="db">18.06.2006</span></div>
+                    <div><span class="lab">Номер:</span><span class="val" id="dn">014884966</span></div>
+                    <div class="dsign"><img id="dsig" src="https://kimi-web-img.kimi.ai/img/www.clipartmax.com/b8fe7c4048e71ec5c77affccbfa93a1bd6b7be55.png" alt=""></div>
+                  </div>
+                </div>
+                <div class="greenbar"><span id="dg">Документ оновлено 29.11.2024 13:08 • Документ оновлено 29.11.2024 13:08 • </span></div>
+                <div class="dfoot">
+                  <div class="dname" id="dfn">Скворцов<br>Максим<br>Андрійович</div>
+                  <div class="dmenu">
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:18px;height:18px;"><circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="dback">
+                <div class="qrt">Код діятиме ще 3:00 хв</div>
+                <div class="codebox" id="cb1">
+                  <div class="qrbox"><div class="qrgrid" id="q1"></div></div>
+                  <canvas class="barcode-canvas" id="bc1" width="220" height="100"></canvas>
+                </div>
+                <div class="qrtog">
+                  <div class="qrtb on">
+                    <div class="ic"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01M17 17h.01"/></svg></div>
+                    <div>QR-код</div>
+                  </div>
+                  <div class="qrtb">
+                    <div class="ic"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></div>
+                    <div>Штрихкод</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- RNOKPP -->
+          <div class="dcard right" data-i="1">
+            <div class="dcard-inner">
+              <div class="dface">
+                <div class="dheader">Картка платника податків</div>
+                <div class="rbody">
+                  <div class="rlab">РНОКПП</div>
+                  <div class="rname" id="rn">Скворцов<br>Максим<br>Андрійович</div>
+                  <div><span class="lab">Дата народження:</span><div style="margin-top:3px;font-weight:500;font-size:15px;" id="rb">18.06.2006</div></div>
+                </div>
+                <div class="greenbar"><span id="dg2">Перевірено державною податковою службою • Перевірено державною податковою службою • </span></div>
+                <div class="dfoot" style="padding-top:8px;">
+                  <div class="rnum" id="rnum">3888596651</div>
+                  <div class="ract">
+                    <div class="icob"><svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:16px;height:16px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+                    <div class="dmenu" style="width:36px;height:36px;"><svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:16px;height:16px;"><circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dback">
+                <div class="qrt">Код діятиме ще 3:00 хв</div>
+                <div class="codebox" id="cb2">
+                  <div class="qrbox"><div class="qrgrid" id="q2"></div></div>
+                  <canvas class="barcode-canvas" id="bc2" width="220" height="100"></canvas>
+                </div>
+                <div class="qrtog">
+                  <div class="qrtb on">
+                    <div class="ic"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M7 12h.01M7 17h.01M12 7h.01M12 12h.01M12 17h.01M17 7h.01M17 12h.01M17 17h.01"/></svg></div>
+                    <div>QR-код</div>
+                  </div>
+                  <div class="qrtb">
+                    <div class="ic"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></div>
+                    <div>Штрихкод</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Add -->
+          <div class="dcard hide" data-i="2">
+            <div class="dcard-inner">
+              <div class="dface">
+                <div class="acard">
+                  <div class="aico"><svg class="icon-svg" viewBox="0 0 24 24" style="width:24px;height:24px;"><path d="M12 5v14M5 12h14"/></svg></div>
+                  <div>Додати документ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Reorder -->
+          <div class="dcard hide" data-i="3">
+            <div class="dcard-inner">
+              <div class="dface">
+                <div class="acard">
+                  <div class="aico"><svg class="icon-svg" viewBox="0 0 24 24" style="width:24px;height:24px;"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg></div>
+                  <div>Змінити порядок документів</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dots" id="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+
+    <!-- AI -->
+    <div class="screen" id="scr-ai">
+      <div class="ait">Дія<span style="color:#fbbf24;">.</span>AI <span style="color:#fbbf24;">&#9733;</span></div>
+      <div class="aich" id="aich"><div class="aim">Привіт! Я — Дія.AI. Чим можу допомогти?</div><div style="clear:both"></div></div>
+      <div class="aiw">
+        <input class="aii" id="aii" placeholder="Напишіть повідомлення...">
+        <button class="ais" id="ais">
+          <svg class="icon-svg" viewBox="0 0 24 24" style="color:#fff;width:18px;height:18px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="screen" id="scr-srv">
+      <div class="srvt">Сервіси</div>
+      <div class="srch">
+        <svg class="icon-svg" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span>Пошук</span>
+      </div>
+      <div class="sg">
+        <div class="stile"><div class="sti"><svg class="icon-svg-fill" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div>Допомога армії</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg></div><div>Незламність</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg-fill" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="2" y="2" width="20" height="20" rx="2" fill="#0057B8"/><rect x="2" y="12" width="20" height="10" rx="0" fill="#FFDD00"/></svg></div><div>Військові облігації</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div>еВідновлення</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div><div>Водієві</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div>Місце проживання</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div>Опитування</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M9 18h6M10 22h4M12 2v2M12 8v2M8 6h8a2 2 0 0 1 2 2v6H6V8a2 2 0 0 1 2-2z"/></svg></div><div>Обмін лампочок</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div>Послуги для ВПО</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><div>Податки</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div>Допомога по безробіттю</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div>Судові послуги</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div>Виконавчі провадження</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div><div>Розваги</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div>Довідки та витяги</div></div>
+        <div class="stile"><div class="sti"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div>Повернення вкладів</div></div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div class="screen" id="scr-menu">
+      <div class="mtit">Меню</div>
+      <div class="mver">Версія Дії: 4.0.0.1488</div>
+      <div class="mgrp">
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+          <span>Повідомлення</span>
+        </div>
+      </div>
+      <div class="mgrp">
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
+          <span>Дія.Підпис</span>
+        </div>
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+          <span>Історія підписань</span>
+        </div>
+      </div>
+      <div class="mgrp">
+        <div class="mit" id="oset">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+          <span>Налаштування</span>
+        </div>
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></span>
+          <span>Оновити застосунок</span>
+        </div>
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg></span>
+          <span>Підключенні пристрої</span>
+        </div>
+      </div>
+      <div class="mgrp">
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+          <span>Служба підтримки</span>
+        </div>
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+          <span>Копіювати номер пристрою</span>
+        </div>
+        <div class="mit">
+          <span class="mii"><svg class="icon-svg" viewBox="0 0 24 24" style="width:20px;height:20px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <span>Питання та відповіді</span>
+        </div>
+      </div>
+      <button class="lout">Вийти</button>
+      <div class="priv">Повідомлення про обробку персональних даних</div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ni" data-t="feed">
+      <div class="nis"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M4 8h16M8 4v16"/></svg></div>
+      <div>Стрічка</div>
+    </div>
+    <div class="ni on" data-t="docs">
+      <div class="nis"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div>
+      <div>Документи</div>
+    </div>
+    <div class="ni" data-t="ai">
+      <div class="nis"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
+      <div>Дія.AI</div>
+    </div>
+    <div class="ni" data-t="srv">
+      <div class="nis"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div>Сервіси</div>
+    </div>
+    <div class="ni" data-t="menu">
+      <div class="nis"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+      <div>Меню</div>
+    </div>
+  </div>
+</div>
+
+<div class="pwa-btn" id="pwaBtn">
+  <svg class="icon-svg" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  Встановити застосунок
+</div>
+
+<div class="modo" id="mod">
+  <div class="mods">
+    <div class="modh">
+      <div class="modt">Редагувати дані</div>
+      <button class="modx" id="cmod">
+        <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="fg"><span class="fl">Прізвище</span><input class="fi" id="sln" value="Скворцов"></div>
+    <div class="fg"><span class="fl">Ім'я</span><input class="fi" id="sfn" value="Максим"></div>
+    <div class="fg"><span class="fl">По батькові</span><input class="fi" id="smn" value="Андрійович"></div>
+    <div class="fg"><span class="fl">Дата народження</span><input class="fi" id="sb" value="18.06.2006"></div>
+    <div class="fg"><span class="fl">Номер паспорта</span><input class="fi" id="sp" value="014884966"></div>
+    <div class="fg"><span class="fl">РНОКПП</span><input class="fi" id="sr" value="3888596651"></div>
+    <div class="fg"><span class="fl">URL фото</span><input class="fi" id="sf" value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop&crop=face"></div>
+    <div class="fg"><span class="fl">Або завантажити з пристрою</span><input type="file" class="fi" id="sff" accept="image/*"></div>
+    <button class="sbt" id="ssave">Зберегти</button>
+  </div>
+</div>
+<div class="toast" id="toa">Збережено!</div>
+
+<script>
+(function(){
+  // Live date for green bar
+  function fmtDate(d) {
+    var day = String(d.getDate()).padStart(2,'0');
+    var month = String(d.getMonth()+1).padStart(2,'0');
+    var year = d.getFullYear();
+    var h = String(d.getHours()).padStart(2,'0');
+    var m = String(d.getMinutes()).padStart(2,'0');
+    return day + '.' + month + '.' + year + ' ' + h + ':' + m;
+  }
+  function updateGreenBar() {
+    var now = new Date();
+    var txt = 'Документ оновлено ' + fmtDate(now) + ' • Документ оновлено ' + fmtDate(now) + ' • ';
+    var el = document.getElementById('dg');
+    if(el) el.textContent = txt;
+  }
+  updateGreenBar();
+  setInterval(updateGreenBar, 1000);
+
+  var def={lastName:'Скворцов',firstName:'Максим',middleName:'Андрійович',birth:'18.06.2006',passport:'014884966',rnokpp:'3888596651',photo:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop&crop=face'};
+  var d=Object.assign({},def);
+  try{ var s=localStorage.getItem('dd'); if(s) d=JSON.parse(s); }catch(e){}
+
+  function upd(){
+    document.getElementById('db').textContent=d.birth;
+    document.getElementById('dn').textContent=d.passport;
+    document.getElementById('dfn').innerHTML=d.lastName+'<br>'+d.firstName+'<br>'+d.middleName;
+    document.getElementById('rn').innerHTML=d.lastName+'<br>'+d.firstName+'<br>'+d.middleName;
+    document.getElementById('rb').textContent=d.birth;
+    document.getElementById('rnum').textContent=d.rnokpp;
+    document.getElementById('ffn').textContent=d.firstName;
+    document.getElementById('dp').src=d.photo;
+    document.getElementById('sln').value=d.lastName;
+    document.getElementById('sfn').value=d.firstName;
+    document.getElementById('smn').value=d.middleName;
+    document.getElementById('sb').value=d.birth;
+    document.getElementById('sp').value=d.passport;
+    document.getElementById('sr').value=d.rnokpp;
+    document.getElementById('sf').value=d.photo;
+    drawBarcode('bc1', d.passport);
+    drawBarcode('bc2', d.rnokpp);
+  }
+  upd();
+
+  var mod=document.getElementById('mod');
+  document.getElementById('oset').addEventListener('click',function(){ mod.classList.add('show'); });
+  document.getElementById('cmod').addEventListener('click',function(){ mod.classList.remove('show'); });
+  document.getElementById('sff').addEventListener('change',function(e){
+    var file=e.target.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(evt){ document.getElementById('sf').value=evt.target.result; };
+    reader.readAsDataURL(file);
+  });
+  mod.addEventListener('click',function(e){ if(e.target===mod) mod.classList.remove('show'); });
+  document.getElementById('ssave').addEventListener('click',function(){
+    d.lastName=document.getElementById('sln').value;
+    d.firstName=document.getElementById('sfn').value;
+    d.middleName=document.getElementById('smn').value;
+    d.birth=document.getElementById('sb').value;
+    d.passport=document.getElementById('sp').value;
+    d.rnokpp=document.getElementById('sr').value;
+    d.photo=document.getElementById('sf').value;
+    try{ localStorage.setItem('dd',JSON.stringify(d)); }catch(e){}
+    upd(); mod.classList.remove('show');
+    var t=document.getElementById('toa'); t.classList.add('on');
+    setTimeout(function(){ t.classList.remove('on'); },2000);
+  });
+
+  function mkqr(id){ var g=document.getElementById(id); if(!g) return; var p=["11111110001010101111111","10000010110101101000001","10111010001110001011101","10111010100001001011101","10111010011010101011101","10000010101010101000001","11111110101010101111111","00000000110110000000000","11101101110000110101110","00101011000101101010000","10110100111110010110101","10101101001010110101101","01010010110101001010011","00000000101101000000000","11111110101000101111111","10000010111011101000001","10111010001000101011101","10111010110110101011101","10111010001110101011101","10000010100101101000001","11111110101010101111111"]; for(var r=0;r<25;r++) for(var c=0;c<25;c++){ var x=document.createElement('div'); x.className='qrc'+(p[r]&&p[r][c]==='1'?' on':''); g.appendChild(x); } }
+  mkqr('q1'); mkqr('q2');
+
+  function drawBarcode(canvasId, text) {
+    var patterns = [
+      "11011001100","11001101100","11001100110","10010011000","10010001100",
+      "10001001100","10011001000","10011000100","10001100100","11001001000",
+      "11001000100","11000100100","10110011100","10011011100","10011001110",
+      "10111001100","10011101100","10011100110","11001110010","11001011100",
+      "11001001110","11011100100","11001110100","11101101110","11101001100",
+      "11100101100","11100100110","11101100100","11100110100","11100110010",
+      "11011011000","11011000110","11000110110","10100011000","10001011000",
+      "10001000110","10110001000","10001101000","10001100010","11010001000",
+      "11000101000","11000100010","10110111000","10110001110","10001101110",
+      "10111011000","10111000110","10001110110","11101110110","11010001110",
+      "11000101110","11011101000","11011100010","11011101110","11101011000",
+      "11101000110","11100010110","11101101000","11101100010","11100011010",
+      "11101111010","11001000010","11110001010","10100110000","10100001100",
+      "10010110000","10010000110","10000101100","10000100110","10110010000",
+      "10110000100","10011010000","10011000010","10000110100","10000110010",
+      "11000010010","11001010000","11110111010","11000010100","10001111010",
+      "10100111100","10010111100","10010011110","10111100100","10011110100",
+      "10011110010","11110100100","11110010100","11110010010","11011011110",
+      "11011110110","11110110110","10101111000","10100011110","10001011110",
+      "10111101000","10111100010","11110101000","11110100010","10111011110",
+      "10111101110","11101011110","11110101110","11010000100","11010010000",
+      "11010011100","1100011101011"
+    ];
+    function charToVal(c) { var code = c.charCodeAt(0); if (code >= 32 && code <= 126) return code - 32; return 0; }
+    var startCode = 104, stopCode = 106;
+    var bars = patterns[startCode];
+    var checksum = startCode;
+    for (var i = 0; i < text.length; i++) {
+      var val = charToVal(text[i]);
+      bars += patterns[val];
+      checksum += val * (i + 1);
+    }
+    checksum = checksum % 103;
+    bars += patterns[checksum];
+    bars += patterns[stopCode];
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width, h = canvas.height;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#000';
+    var moduleWidth = w / bars.length;
+    for (var i = 0; i < bars.length; i++) {
+      if (bars[i] === '1') ctx.fillRect(i * moduleWidth, 0, moduleWidth + 0.5, h - 18);
+    }
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 13px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, w / 2, h - 4);
+  }
+  drawBarcode('bc1', d.passport);
+  drawBarcode('bc2', d.rnokpp);
+
+  var nav=document.querySelectorAll('.ni'), scr=document.querySelectorAll('.screen');
+  nav.forEach(function(n){ n.addEventListener('click',function(){ var t=n.dataset.t; nav.forEach(function(x){x.classList.remove('on');}); n.classList.add('on'); scr.forEach(function(s){ s.classList.remove('active'); if(s.id==='scr-'+t) s.classList.add('active'); }); }); });
+
+  var cds=document.querySelectorAll('.dcard'), dts=document.querySelectorAll('.dot'), ci=0, tot=cds.length;
+  function uc(){ cds.forEach(function(c,i){ c.classList.remove('left','center','right','hide','flip'); if(i===ci) c.classList.add('center'); else if(i===ci-1||(ci===0&&i===tot-1)) c.classList.add('left'); else if(i===ci+1||(ci===tot-1&&i===0)) c.classList.add('right'); else c.classList.add('hide'); }); dts.forEach(function(x,i){ x.classList.toggle('on',i===ci); }); }
+  cds.forEach(function(c){ c.addEventListener('click',function(){ var idx=parseInt(c.dataset.i); if(idx===ci){ if(idx<2) c.classList.toggle('flip'); } else { ci=idx; uc(); } }); });
+
+  var sx=0, car=document.getElementById('car');
+  car.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; },{passive:true});
+  car.addEventListener('touchend',function(e){ var df=sx-e.changedTouches[0].clientX; if(Math.abs(df)>50){ ci=(df>0)?(ci+1)%tot:(ci-1+tot)%tot; uc(); } },{passive:true});
+  var md=false;
+  car.addEventListener('mousedown',function(e){ md=true; sx=e.clientX; });
+  car.addEventListener('mouseup',function(e){ if(!md) return; md=false; var df=sx-e.clientX; if(Math.abs(df)>50){ ci=(df>0)?(ci+1)%tot:(ci-1+tot)%tot; uc(); } });
+
+  document.querySelectorAll('.qrtog').forEach(function(t){ 
+    var b=t.querySelectorAll('.qrtb'); 
+    var codebox = t.parentElement.querySelector('.codebox');
+    var qrbox = codebox ? codebox.querySelector('.qrbox') : null;
+    var bc = codebox ? codebox.querySelector('.barcode-canvas') : null;
+    b.forEach(function(x, idx){ 
+        x.addEventListener('click',function(e){ 
+            e.stopPropagation(); 
+            b.forEach(function(y){y.classList.remove('on');}); 
+            x.classList.add('on'); 
+            if(qrbox && bc){
+                if(idx === 0){ qrbox.style.display='flex'; bc.style.display='none'; }
+                else { qrbox.style.display='none'; bc.style.display='block'; }
+            }
+        }); 
+    }); 
+});
+
+  var ach=document.getElementById('aich'), aii=document.getElementById('aii'), ais=document.getElementById('ais');
+  function amsg(t,u){ var dv=document.createElement('div'); dv.className='aim'+(u?' u':''); dv.textContent=t; ach.appendChild(dv); var cl=document.createElement('div'); cl.style.clear='both'; ach.appendChild(cl); ach.scrollTop=ach.scrollHeight; }
+  function snd(){ var t=aii.value.trim(); if(!t) return; amsg(t,true); aii.value=''; setTimeout(function(){ amsg('Дякую за звернення! Я поки що в режимі демо.',false); },800); }
+  ais.addEventListener('click',snd);
+  aii.addEventListener('keypress',function(e){ if(e.key==='Enter') snd(); });
+
+  // PWA Install
+  var deferredPrompt;
+  var pwaBtn = document.getElementById('pwaBtn');
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    setTimeout(function(){ pwaBtn.classList.add('show'); }, 800);
+  });
+  pwaBtn.addEventListener('click', function() {
+    if(deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(choiceResult) {
+        if(choiceResult.outcome === 'accepted') { pwaBtn.classList.remove('show'); }
+        deferredPrompt = null;
+      });
+    }
+  });
+  window.addEventListener('appinstalled', function() { pwaBtn.classList.remove('show'); deferredPrompt = null; });
+
+  // Service Worker
+  if('serviceWorker' in navigator) {
+    var swCode = "self.addEventListener('install',function(e){e.waitUntil(self.skipWaiting());});self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});self.addEventListener('fetch',function(e){e.respondWith(fetch(e.request).catch(function(){return new Response('<html><body style=\'display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif\'><h1>\u0414\u0456\u044f</h1><p>\u041d\u0435\u043c\u0430\u0454 \u0437\u0027\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0437 \u0456\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u043e\u043c</p></body></html>',{headers:{'Content-Type':'text/html'}});}));});";
+    var swBlob = new Blob([swCode], {type: 'application/javascript'});
+    var swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>
